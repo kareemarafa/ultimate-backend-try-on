@@ -1,0 +1,52 @@
+name: guardian
+port: 5000
+host: '::'
+description: guardian api spec
+tag: guardian-svc
+version: latest
+
+setup:
+  cookie:
+    secret: 'my-secret-looking-good'
+    domain: 127.0.0.1
+    path: /
+    # signed: false
+    # sameSite: lax
+
+clients:
+  redis:
+    useCluster: false
+    redisOptions:
+      host: redis
+      port: 6379
+
+transport:
+  grpc:
+    package: 'guardian'
+    protoPath: 'service.proto'
+    url: 0.0.0.0:{{port}}
+
+swagger:
+  options:
+    auth:
+      authType: 'bearer'
+      option:
+        type: 'http'
+        scheme: 'bearer'
+        name: 'Authorization'
+
+orm:
+  mikro:
+    type: 'postgresql'
+    clientUrl: 'postgres://kratos:secret@postgresd:5432/guardian_db?sslmode=disable&max_conns=20&max_idle_conns=4'
+    dbName: 'guardian_db'
+
+kratos:
+  config:
+    basePath: 'http://kratos:4433'
+    baseOptions:
+      withCredentials: false
+      timeout: 10000
+  admin:
+    configuration:
+      basePath: 'http://kratos:4434'

@@ -1,0 +1,50 @@
+{
+  "version": 2,
+  "timeout": "3000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "name": "ultimate-backend",
+  "endpoints": [
+    {
+      "endpoint": "/billing",
+      "backend": [
+        {
+          "url_pattern": "/api/v1",
+          "method": "GET",
+          "host": ["http://billing-svc:5000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/guardian/forms",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/api/forms/login",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET",
+          "is_collection": true,
+          "extra_config": {},
+          "host": ["http://guardian-svc:5000"],
+          "disable_host_sanitize": false
+        }
+      ]
+    },
+    {
+      "endpoint": "/v1/guardian/graphql",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/api/graphql",
+          "sd": "static",
+          "method": "POST",
+          "extra_config": {},
+          "host": ["http://guardian-svc:5000"],
+          "disable_host_sanitize": false
+        }
+      ]
+    }
+  ]
+}

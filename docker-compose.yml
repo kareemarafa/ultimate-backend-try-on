@@ -1,0 +1,185 @@
+version: '3.8'
+
+services:
+  guardian:
+    image: 'ub-boilerplate/guardian'
+    build:
+      context: .
+      args:
+        APP_NAME: guardian
+        PORT: 5000
+      dockerfile: .deploy/base.Dockerfile
+    links:
+      - redis
+      - kratos
+      - postgresd
+    ports:
+      - '5000:5000'
+    container_name: guardian-svc
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - kratos
+      - redis
+      - postgresd
+    networks:
+      - intranet
+
+  organisation:
+    image: 'ub-boilerplate/organisation'
+    build:
+      context: .
+      args:
+        APP_NAME: organisation
+        PORT: 5001
+      dockerfile: .deploy/base.Dockerfile
+
+    ports:
+      - '5001:5001'
+    container_name: organisation-svc
+    links:
+      - redis
+    depends_on:
+      - kratos
+      - redis
+    networks:
+      - intranet
+
+  billing:
+    image: 'ub-boilerplate/billing'
+    build:
+      context: .
+      args:
+        APP_NAME: billing
+        PORT: 5002
+      dockerfile: .deploy/base.Dockerfile
+
+    links:
+      - redis
+    ports:
+      - '5002:5002'
+    container_name: billing-svc
+    depends_on:
+      - kratos
+      - redis
+    networks:
+      - intranet
+
+  application:
+    image: 'ub-boilerplate/application'
+    build:
+      context: .
+      args:
+        APP_NAME: application
+        PORT: 3333
+      dockerfile: .deploy/base.Dockerfile
+
+    links:
+      - redis
+    ports:
+      - '3333:3333'
+    container_name: application-svc
+    depends_on:
+      - kratos
+      - redis
+    networks:
+      - intranet
+
+  ################################## KRATOS START #################################
+  kratos-migrate:
+    container_name: kratos-migrate
+    image: oryd/kratos:latest
+    command: migrate -c /etc/config/kratos/kratos.yml sql -e --yes
+    volumes:
+      - type: bind
+        source: ./.deploy/ory/config
+        target: /etc/config/kratos
+    environment:
+      - DSN=postgres://kratos:secret@postgresd:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    depends_on:
+      - postgresd
+    networks:
+      - intranet
+
+  kratos:
+    image: oryd/kratos:latest
+    container_name: kratos
+    ports:
+      - '4433:4433'
+      - '4434:4434'
+    command: serve --config /etc/config/kratos/kratos.yml all
+    volumes:
+      - type: bind
+        source: ./.deploy/ory/config
+        target: /etc/config/kratos
+    environment:
+      - DSN=postgres://kratos:secret@postgresd:5432/kratos?sslmode=disable&max_conns=20&max_idle_conns=4
+    depends_on:
+      - kratos-migrate
+      - postgresd
+      - zipkin
+    links:
+      - zipkin
+    networks:
+      - intranet
+  ################################## KRATOS START #################################
+
+  ################################# KRAKEND START #################################
+  krakend:
+    container_name: krakend
+    image: devopsfaith/krakend:config-watcher
+    command: run -d -c /etc/krakend/krakend.json
+    ports:
+      - '8080:8080'
+    networks:
+      - intranet
+    volumes:
+      - ./.deploy/krakend:/etc/krakend
+  ################################## KRAKEND END ##################################
+
+  ############################### THIRD-PARTY START ###############################
+  postgresd:
+    container_name: postgresd
+    image: postgres:9.6
+    volumes:
+      - ./scripts/pg-init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_MULTIPLE_DATABASES=guardian_db,organisation_db
+      - POSTGRES_USER=kratos
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=kratos
+    networks:
+      - intranet
+
+  redis:
+    container_name: redis
+    image: bitnami/redis
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - '6379:6379'
+    networks:
+      - intranet
+
+  mongo:
+    container_name: mongo
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    networks:
+      - intranet
+
+  zipkin:
+    container_name: zipkin
+    ports:
+      - '9411:9411'
+    image: openzipkin/zipkin
+    networks:
+      - intranet
+  ################################ THIRD-PARTY END ################################
+
+networks:
+  intranet:
+    driver: bridge

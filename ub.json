@@ -1,0 +1,37 @@
+{
+  "name": "ub-boilerplate",
+  "services": {
+    "organisation": {
+      "type": "svc",
+      "docker": true,
+      "kubernetes": false,
+      "language": "typescript",
+      "name": "organisation",
+      "port": 3000
+    },
+    "account": {
+      "type": "svc",
+      "docker": true,
+      "kubernetes": false,
+      "language": "typescript",
+      "name": "account",
+      "port": 3001
+    },
+    "billing": {
+      "type": "svc",
+      "docker": true,
+      "kubernetes": false,
+      "language": "typescript",
+      "name": "billing",
+      "port": 3002
+    },
+    "application": {
+      "type": "svc",
+      "docker": true,
+      "kubernetes": false,
+      "language": "typescript",
+      "name": "application",
+      "port": 3003
+    }
+  }
+}

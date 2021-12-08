@@ -1,0 +1,17 @@
+{
+  "name": "@ub-boilerplate/guardian-app",
+  "version": "0.0.1",
+  "description": "auth services",
+  "author": "Rex Isaac Raphael",
+  "dependencies": {
+    "@mikro-orm/migrations": "^4.5.9",
+    "fastify-cookie": "^5.3.1"
+  },
+  "mikro-orm": {
+    "useTsNode": false,
+    "configPaths": [
+      "./src/mikro-orm.config.ts",
+      "./src/mikro-orm.config.js"
+    ]
+  }
+}
